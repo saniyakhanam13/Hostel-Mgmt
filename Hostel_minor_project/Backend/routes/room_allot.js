@@ -16,6 +16,9 @@ router.post('/bookroom',register_verify,[
           }
         else{
             const usera = await User.findById(req.user)
+            if (!usera) {
+                return res.status(401).json({ message: 'User not found, please login again', response: false });
+            }
             console.log(usera._id)
             
             if(usera.room)

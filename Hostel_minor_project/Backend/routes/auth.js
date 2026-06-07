@@ -7,6 +7,7 @@ const {body,validationResult} = require('express-validator') //this is for the v
 const JWT_SECRET = 'Harryisagoodb$oy';
 const router = express.Router()
 const fetchuser = require('../middleware/fetchuser')
+const register_verify = require('../middleware/register_verify')
 
 //Route : 1 create a user using : post  '/api/auth/createuser' does not require auth
 router.post('/createuser',[
@@ -108,14 +109,22 @@ router.post('/login',[
 }
 })
 //Router : 3 end point for the get user details
-router.get('/getuser', fetchuser,  async (req, res) => {
+router.get('/getuser', register_verify,  async (req, res) => {
 
     try {
       let userId = req.user;
       const user = await User.findById(userId).select("-password")
-      let room_no =await Room.findOne({user:user._id});
+      if (!user) {
+        return res.status(404).json({ message: "User not found", response: false });
+      }
+      let room_no = await Room.findOne({user:user._id});
       
-      res.json({user,room_no:room_no.room_no,response:true})
+      res.json({
+        user,
+        room_no: room_no ? room_no.room_no : null,
+        userkaname: user.name,
+        response: true
+      })
     } catch (error) {
       console.error(error.message);
       res.status(500).json({error:"Internal Server Error",response:false});

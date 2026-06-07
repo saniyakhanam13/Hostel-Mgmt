@@ -17,9 +17,9 @@ router.get('/getallusers', fetchadmin,  async (req, res) => {
         rooms.sort((a, b) => a.room_no - b.room_no);
         const data=[]
         for(let i=0;i<rooms.length;i++){
-            let admin = await User.findById(rooms[i].user)
+            let student = await User.findById(rooms[i].user)
          
-            data.push({room_no:rooms[i].room_no,name:rooms[i].name,email:admin.email})
+            data.push({room_no:rooms[i].room_no,name:rooms[i].name,email:student ? student.email : 'N/A'})
         }
         
         

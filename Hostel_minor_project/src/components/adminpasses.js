@@ -142,7 +142,7 @@ dispatch({ type: 'UPDATE_AVALUE', payload: true });
     let front=false
     function startVideo() {
         console.log("cvstarted")
-        var constraints = { video: { facingMode: (front? "user" : "environment"), width: vwidth, height: vheight  } };
+        var constraints = { video: { facingMode: { ideal: front ? "user" : "environment" }, width: vwidth, height: vheight  } };
         navigator.mediaDevices.getUserMedia(constraints)
         .then(function(mediaStream) {
           video.srcObject = mediaStream;

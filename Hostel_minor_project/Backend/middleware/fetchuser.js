@@ -21,6 +21,9 @@ const fetchuser = async(req, res, next) => {
         }
         else{
             const usera = await User.findById(data.id)
+            if (!usera) {
+                return res.status(401).json({ error: "invalid Session", response: false });
+            }
             if(!usera.room){
                 res.json({ error: "Please book room ",userkaname:usera.name,response:false })
             }else{

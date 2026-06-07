@@ -67,15 +67,21 @@ dispatch({ type: 'UPDATE_EMAIL', payload: json.user.email });
 dispatch({ type: 'UPDATE_MOBILE', payload: json.user.mobile });
 dispatch({ type: 'UPDATE_room', payload: json.room_no });
 dispatch({ type: 'UPDATE_photo_url', payload: `http://${state.backend}:${state.port}/api/a/newupload/${json.user.photo_url}` });
-NODisableli()
-}else{
-  setroombook_alert("")
-  setroombook_grid("")
-  Disableli()
+
+if (json.room_no) {
+  NODisableli();
+} else {
+  setroombook_alert("");
+  setroombook_grid("");
+  Disableli();
 }
 
- if(json.response && !json.user.photo_url){
-  Vmodalopen(json)
+if(!json.user.photo_url){
+  Vmodalopen(json);
+}
+}else{
+  localStorage.clear();
+  navigate("/signin");
 }
 
 }
@@ -101,7 +107,7 @@ for(let i=0;i<json.length;i++){
 
   const handle=async (e)=>{
    
-    let roomno={sroom}
+    let roomno=parseInt(sroom)
     e.preventDefault();
     const response=await fetch(`http://${state.backend}:${state.port}/api/b/bookroom`,{
         method:'POST',

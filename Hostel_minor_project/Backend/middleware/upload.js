@@ -1,13 +1,19 @@
-// conda activate env_dlib
-
-
 const multer = require("multer");
-const mongourc=require("../db")
-const fetchuser = require('./fetchuser');
+const mongoose = require("mongoose");
+const fetchuser = require('../middleware/fetchuser');
 const GridFsStorage = require("multer-gridfs-storage").GridFsStorage;
 
+const dbPromise = new Promise((resolve, reject) => {
+    if (mongoose.connection.readyState === 1) {
+        resolve(mongoose.connection.db);
+    } else {
+        mongoose.connection.once("open", () => resolve(mongoose.connection.db));
+        mongoose.connection.once("error", (err) => reject(err));
+    }
+});
+
 const storage = new GridFsStorage({
-    url:"mongodb://127.0.0.1:27017/app",
+    db: dbPromise,
     options: { useNewUrlParser: true, useUnifiedTopology: true },
     
     file: (req, file) => {

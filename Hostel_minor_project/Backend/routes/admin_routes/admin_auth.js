@@ -92,6 +92,9 @@ router.get('/getadmin', fetchadmin,  async (req, res) => {
     try {
       let userId = req.user;
       const user = await Admin.findById(userId).select("-password")
+      if (!user) {
+        return res.status(404).json({ message: "Admin not found", response: false });
+      }
      
       
       res.json({user,response:true})

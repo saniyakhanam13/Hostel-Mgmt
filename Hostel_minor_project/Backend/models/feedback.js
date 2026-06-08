@@ -18,7 +18,12 @@ const FeedbackSchema = new Schema({
 ,
   title :{
     type:String,
-  
+  }
+,
+  category :{
+    type:String,
+    enum: ['Hostel', 'Food', 'Maintenance', 'Event'],
+    required:true
   }
 ,
 message:{

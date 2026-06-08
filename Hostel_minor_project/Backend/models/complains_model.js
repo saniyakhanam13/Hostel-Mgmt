@@ -27,7 +27,10 @@ const ComplainSchema = new Schema({
   },
   description: {
     type: String,
-    
+  },
+  assignedTo: {
+    type: String,
+    default: "Unassigned"
   },
 
   date: {

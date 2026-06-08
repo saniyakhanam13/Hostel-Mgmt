@@ -30,11 +30,20 @@ const TokenSchema = new Schema({
   },
   in_time: {
     type: Date,
-   
   },
   out_time: {
     type: Date,
   },
+  destination: {
+    type: String
+  },
+  status: {
+    type: String,
+    default: "Pending"
+  },
+  leaveDuration: {
+    type: String
+  }
 
 });
 mongoose.pluralize(null);

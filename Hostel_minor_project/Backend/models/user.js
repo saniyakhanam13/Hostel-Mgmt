@@ -10,21 +10,45 @@ const UserSchema = new Schema({
     type:String,
     required:true,
     unique:true
-  }
-  ,room:{
+  },
+  room:{
    type:Boolean,
    default:false
-  }
-  ,photo_url:{
+  },
+  photo_url:{
     type:String,
   },
-   mobile:{
+  mobile:{
     type:Number
-   }
-  ,password:{
+  },
+  password:{
     type:String,
     required:true
-  },date:{
+  },
+  username:{
+    type:String,
+    unique:true,
+    sparse:true
+  },
+  usn:{
+    type:String
+  },
+  hostelName:{
+    type:String
+  },
+  roomNo:{
+    type:String
+  },
+  branch:{
+    type:String
+  },
+  semester:{
+    type:String
+  },
+  parentMobile:{
+    type:String
+  },
+  date:{
     type:Date,
     default:Date.now
   }

@@ -34,6 +34,8 @@ export const Home = () => {
     dothis()
     getuserdata()
     getroomnumbers()
+    fetchAttendance()
+    fetchLeaves()
     setCount(100);
   }
   else{
@@ -47,7 +49,13 @@ export const Home = () => {
   dispatch({ type: 'UPDATE_AVALUE', payload: false });
  }
 
- const getuserdata=async()=>{
+  const [presentDays, setPresentDays] = useState(0);
+  const [absentDays, setAbsentDays] = useState(0);
+  const [approvedLeaves, setApprovedLeaves] = useState(0);
+  const [rejectedLeaves, setRejectedLeaves] = useState(0);
+  const [activeLeave, setActiveLeave] = useState(null);
+
+  const getuserdata=async()=>{
   const response=await fetch(`http://${state.backend}:${state.port}/api/auth/getuser`,{
     method:'get',
     headers:{
@@ -66,7 +74,13 @@ localStorage.setItem('room_no',json.room_no)
 dispatch({ type: 'UPDATE_EMAIL', payload: json.user.email });
 dispatch({ type: 'UPDATE_MOBILE', payload: json.user.mobile });
 dispatch({ type: 'UPDATE_room', payload: json.room_no });
-dispatch({ type: 'UPDATE_photo_url', payload: `http://${state.backend}:${state.port}/api/a/newupload/${json.user.photo_url}` });
+dispatch({ type: 'UPDATE_photo_url', payload: json.user.photo_url ? `http://${state.backend}:${state.port}/api/a/newupload/${json.user.photo_url}` : "vec2.jpg" });
+dispatch({ type: 'UPDATE_USERNAME', payload: json.user.username || "" });
+dispatch({ type: 'UPDATE_USN', payload: json.user.usn || "" });
+dispatch({ type: 'UPDATE_HOSTEL', payload: json.user.hostelName || "MBH F" });
+dispatch({ type: 'UPDATE_BRANCH', payload: json.user.branch || "" });
+dispatch({ type: 'UPDATE_SEMESTER', payload: json.user.semester || "" });
+dispatch({ type: 'UPDATE_PARENT_MOBILE', payload: json.user.parentMobile || "" });
 
 if (json.room_no) {
   NODisableli();
@@ -85,6 +99,51 @@ if(!json.user.photo_url){
 }
 
 }
+
+const fetchAttendance = async () => {
+  try {
+    const response = await fetch(`http://${state.backend}:${state.port}/api/a/attend`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'auth-token': localStorage.getItem('token')
+      }
+    });
+    const json = await response.json();
+    if (json.response) {
+      const present = json.attenhist.filter(r => r.status === 'Present').length;
+      const absent = json.attenhist.filter(r => r.status === 'Absent').length;
+      setPresentDays(present);
+      setAbsentDays(absent);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const fetchLeaves = async () => {
+  try {
+    const response = await fetch(`http://${state.backend}:${state.port}/api/g/gatetoken`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'auth-token': localStorage.getItem('token')
+      }
+    });
+    const json = await response.json();
+    if (json.response) {
+      const approved = json.history.filter(r => r.status === 'Approved').length;
+      const rejected = json.history.filter(r => r.status === 'Rejected').length;
+      const active = json.history.find(r => r.status === 'Pending' || r.status === 'Approved' || r.status === 'Out');
+      setApprovedLeaves(approved);
+      setRejectedLeaves(rejected);
+      setActiveLeave(active);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
  const getroomnumbers=async()=>{
   const response=await fetch(`http://${state.backend}:${state.port}/api/b/roomnumbers`,{
     method:'get',
@@ -159,97 +218,104 @@ for(let i=0;i<json.length;i++){
 </div>
     <div className="one two firstinhome">
       
-   <div className="flex flex-wrap mt-6 -mx-3 billoone" style={{width:"100%"}} >
-<div className="w-half px-3 mb-6 lg:mb-0 lg:flex-none ww50" >
-<div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border" id="fb50">
-<div className="flex-auto p-4">
-<div className="flex flex-wrap -mx-3 twrem">
-<div className="max-w-full px-3 lg:w-1/2 lg:flex-none">
-<div className="flex flex-col h-full">
-<p className="pt-2 mb-1 font-semibold">Welcome to</p>
-<h5 className="font-bold">Mega Boys Hostels</h5>
-<p className="mb-12">The hostel facility is available to the regular students who are on the rolls of the institute depending upon the availability.</p>
-<a className="mt-auto mb-0 font-semibold leading-normal text-sm group text-slate-500" target={'_blank'} href="https://www.nitj.ac.in/index.php/nitj_cinfo/index/23">
-Read More
-<i className="fas fa-arrow-right ease-bounce text-sm group-hover:translate-x-1.25 ml-1 leading-normal transition-all duration-200" aria-hidden="true"></i>
-</a>
-</div>
-</div>
-<div className="max-w-full px-3 mt-12 ml-auto text-center lg:mt-0 lg:w-5/12 lg:flex-none mbhh">
-<div className="h-full bg-gradient-to-tl from-purple-700 to-pink-500 rounded-xl">
-{/* <img src="../assets/img/shapes/waves-white.svg" className="absolute top-0 hidden w-1/2 h-full lg:block" /> */}
-<div className="relative flex items-center justify-center h-full">
-<img className="relative z-20 w-full pt-6" src={tree} />
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div className="w-half px-3 lg:flex-none belo50">
-<div className="border-black/12.5 shadow-soft-xl relative flex h-full min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border p-4" id='underb50'>
-<div className="relative h-full overflow-hidden bg-cover rounded-xl bckk">
-<span className="absolute top-0 left-0 w-full h-full bg-center bg-cover bg-gradient-to-tl from-gray-900 to-slate-800 opacity-80"></span>
-<div className="relative z-10 flex flex-col flex-auto h-full">
-{/* <h5 className="pt-2 mb-6 font-bold text-white">Gallery</h5> */}
-<div id='announceslist' >
-<div id="carouselExampleCaptions" className="carousel slide">
-  <div className="carousel-indicators">
-    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" className="active" aria-current="true" aria-label="Slide 1"></button>
-    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1" aria-label="Slide 2"></button>
-    <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2" aria-label="Slide 3"></button>
-  </div>
-  <div className="carousel-inner">
-    <div className="carousel-item active">
-      <img src={photo1} className="d-block w-100" alt="..."/>
-      <div className="carousel-caption d-none d-md-block">
-       
-        <p>Plannted more than 100+ trees by students</p>
+      <div className="container-fluid py-4" style={{width:"100%"}}>
+        <div className="flex flex-wrap -mx-3">
+          {/* Profile Card */}
+          <div className="w-full lg:w-5/12 px-3 mb-6 lg:mb-0">
+            <div className="card h-full bg-white shadow-soft-xl rounded-2xl p-6 flex flex-col items-center text-center">
+              <div className="w-28 h-28 rounded-full overflow-hidden mb-4 border-4 border-purple-500 shadow-lg">
+                <img src={state.user_photo_url || "vec2.jpg"} alt="avatar" className="w-full h-full object-cover" />
+              </div>
+              <h4 className="font-bold text-gray-800 text-2xl mb-1">{state.user_name}</h4>
+              <p className="text-sm text-purple-600 font-semibold mb-4">@{state.user_username || "username"}</p>
+              
+              <div className="w-full text-left space-y-3 mt-2 border-t pt-4">
+                <div className="flex justify-between text-sm border-b pb-2"><span className="text-gray-500 font-medium">USN / Reg No:</span><span className="font-semibold text-gray-800">{state.user_usn || "N/A"}</span></div>
+                <div className="flex justify-between text-sm border-b pb-2"><span className="text-gray-500 font-medium">Branch:</span><span className="font-semibold text-gray-800">{state.user_branch || "N/A"}</span></div>
+                <div className="flex justify-between text-sm border-b pb-2"><span className="text-gray-500 font-medium">Semester / Year:</span><span className="font-semibold text-gray-800">{state.user_semester || "N/A"}</span></div>
+                <div className="flex justify-between text-sm border-b pb-2"><span className="text-gray-500 font-medium">Phone:</span><span className="font-semibold text-gray-800">{state.user_mobile || "N/A"}</span></div>
+                <div className="flex justify-between text-sm border-b pb-2"><span className="text-gray-500 font-medium">Parent Contact:</span><span className="font-semibold text-gray-800">{state.user_parentMobile || "N/A"}</span></div>
+                <div className="flex justify-between text-sm border-b pb-2"><span className="text-gray-500 font-medium">Hostel Name:</span><span className="font-semibold text-gray-800">{state.user_hostelName || "Campus Stay Hostel"}</span></div>
+                <div className="flex justify-between text-sm pb-1"><span className="text-gray-500 font-medium">Room Number:</span><span className="font-semibold text-gray-800">{state.user_room || "Unallotted"}</span></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column (Attendance & Leave Cards) */}
+          <div className="w-full lg:w-7/12 px-3 flex flex-col justify-between">
+            {/* Attendance Stats Card */}
+            <div className="card bg-white shadow-soft-xl rounded-2xl p-6 mb-6">
+              <h5 className="font-bold text-gray-800 mb-4 flex items-center">
+                <span className="w-2.5 h-6 bg-gradient-to-b from-purple-600 to-pink-500 rounded-full mr-3"></span>
+                Attendance Statistics
+              </h5>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                  <p className="text-xs text-green-600 font-bold uppercase mb-1">Present</p>
+                  <h3 className="font-extrabold text-green-700 text-3xl">{presentDays}</h3>
+                </div>
+                <div className="p-4 bg-red-50 rounded-xl border border-red-100">
+                  <p className="text-xs text-red-600 font-bold uppercase mb-1">Absent</p>
+                  <h3 className="font-extrabold text-red-700 text-3xl">{absentDays}</h3>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                  <p className="text-xs text-purple-600 font-bold uppercase mb-1">Attendance Rate</p>
+                  <h3 className="font-extrabold text-purple-700 text-3xl">
+                    {presentDays + absentDays > 0 ? ((presentDays / (presentDays + absentDays)) * 100).toFixed(1) : 0}%
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            {/* Leave Pass Card */}
+            <div className="card bg-white shadow-soft-xl rounded-2xl p-6 flex-grow flex flex-col justify-between">
+              <div>
+                <h5 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <span className="w-2.5 h-6 bg-gradient-to-b from-blue-600 to-cyan-500 rounded-full mr-3"></span>
+                  Leave Pass Summary
+                </h5>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4 text-center">
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-500 font-semibold mb-1">Approved Passes</p>
+                    <h4 className="font-bold text-gray-800 text-2xl">{approvedLeaves}</h4>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-500 font-semibold mb-1">Rejected Passes</p>
+                    <h4 className="font-bold text-gray-800 text-2xl">{rejectedLeaves}</h4>
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Leave Pass Status */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Active Gate Pass Status:</p>
+                {activeLeave ? (
+                  <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-xl flex items-center justify-between shadow-sm">
+                    <div>
+                      <p className="text-xs text-yellow-700 font-extrabold uppercase tracking-wider">{activeLeave.status}</p>
+                      <p className="text-base text-gray-800 font-bold mt-1 mb-1">{activeLeave.Subject}</p>
+                      <p className="text-xs text-gray-500 font-medium">Destination: <span className="text-gray-700 font-semibold">{activeLeave.destination || "Local"}</span></p>
+                    </div>
+                    <span className={`px-3 py-1.5 text-xs font-bold rounded-full shadow-sm ${
+                      activeLeave.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                      activeLeave.status === 'Out' ? 'bg-blue-100 text-blue-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {activeLeave.status}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl text-center">
+                    <p className="text-sm text-gray-500 font-medium">No active leave passes found.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div className="carousel-item">
-      <img src={photo2} className="d-block w-100" alt="..."/>
-      <div className="carousel-caption d-none d-md-block">
-        {/* <h5>Second slide label</h5> */}
-        <p>Sports meet was held last week</p>
-      </div>
-    </div>
-    <div className="carousel-item">
-      <img src={photo3} className="d-block w-100" alt="..."/>
-      <div className="carousel-caption d-none d-md-block">
-        
-        <p>Republic day celebration</p>
-      </div>
-    </div>
-  </div>
-  <button className="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
-    <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span className="visually-hidden">Previous</span>
-  </button>
-  <button className="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
-    <span className="carousel-control-next-icon" aria-hidden="true"></span>
-    <span className="visually-hidden">Next</span>
-  </button>
-</div>
-  
-
-
- 
-
-</div>
-
-</div>
-
-
-
-
-
-</div>
-</div>
-</div>
-</div>
-   </div>
    <div className={`one ${roombook_grid}`} id='roombookpaytm' >
    <div className="flex flex-wrap mt-6 -mx-3 billoone">
 <div className="w-half px-3 mb-6 lg:mb-0 lg:flex-none ww50">

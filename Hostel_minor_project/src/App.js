@@ -29,6 +29,8 @@ import {Adminsidebar} from './components/adminsidebar'
 import {Temp} from './components/temp'
 import {Complains} from './components/complains'
 import {Attendance} from './components/attendance'
+import {Events} from './components/events'
+import {Adminfeedback} from './components/adminfeedback'
 
 import { Tsidebar } from './components/tsidebar';
 import {HandleClick} from './components/tsidebar'
@@ -91,6 +93,7 @@ if(admintoken){
       <Route path="/about" element={<About/>}/>
       <Route path="/temp" element={<Temp/>}/>
       <Route path="/attendance" element={<Attendance/>}/>
+      <Route path="/events" element={<Events/>}/>
 
       <Route exact path="/signup" element={<Signup/>}/>
       <Route exact path="/signin" element={<Signin/>}/>
@@ -99,6 +102,7 @@ if(admintoken){
       <Route exact path="/adminattendance" element={<Adminattendance/>}/>
       <Route exact path="/admincomplains" element={<Admincomplains/>}/>
       <Route exact path="/adminpasses" element={<Adminpasses/>}/>
+      <Route exact path="/adminfeedback" element={<Adminfeedback/>}/>
     </Routes>
       </div>
           </div>

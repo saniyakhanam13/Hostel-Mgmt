@@ -68,6 +68,106 @@ export const Tsidebar = () => {
   const [crossp,setcrossp]=useState(0);
   const { state, dispatch } = useContext(noteContext);
 
+  const [editName, setEditName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [editMobile, setEditMobile] = useState("");
+  const [editParentMobile, setEditParentMobile] = useState("");
+  const [editUsn, setEditUsn] = useState("");
+  const [editBranch, setEditBranch] = useState("");
+  const [editSemester, setEditSemester] = useState("");
+  const [editHostelName, setEditHostelName] = useState("");
+  const [editRoomNo, setEditRoomNo] = useState("");
+
+  const handleGalleryUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Draw to canvas preview
+    const canvas = document.getElementById('canvas2');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = URL.createObjectURL(file);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await axios.post(`http://${state.backend}:${state.port}/api/a/newupload`, formData, {
+        headers: {
+          'auth-token': localStorage.getItem('token')
+        }
+      });
+      if (res.data.response) {
+        document.getElementById('profilealert').className = "p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400";
+        document.getElementById('profilealert').innerHTML = res.data.message;
+        document.getElementById('profilealert').style.display = 'block';
+        dispatch({ type: 'UPDATE_photo_url', payload: res.data.url });
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById('profilealert').className = "p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400";
+      document.getElementById('profilealert').innerHTML = "Failed to upload photo.";
+      document.getElementById('profilealert').style.display = 'block';
+    }
+  };
+
+  const saveProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`http://${state.backend}:${state.port}/api/auth/updateprofile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': localStorage.getItem('token')
+        },
+        body: JSON.stringify({
+          name: editName,
+          username: editUsername,
+          mobile: editMobile,
+          parentMobile: editParentMobile,
+          usn: editUsn,
+          branch: editBranch,
+          semester: editSemester,
+          hostelName: editHostelName,
+          roomNo: editRoomNo
+        })
+      });
+      const json = await response.json();
+      if (json.response) {
+        document.getElementById('profilealert').className = "p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400";
+        document.getElementById('profilealert').innerHTML = "Profile updated successfully!";
+        document.getElementById('profilealert').style.display = 'block';
+
+        // Dispatch updates to global context
+        dispatch({ type: 'UPDATE_NAME', payload: editName });
+        dispatch({ type: 'UPDATE_USERNAME', payload: editUsername });
+        dispatch({ type: 'UPDATE_MOBILE', payload: editMobile });
+        dispatch({ type: 'UPDATE_PARENT_MOBILE', payload: editParentMobile });
+        dispatch({ type: 'UPDATE_USN', payload: editUsn });
+        dispatch({ type: 'UPDATE_BRANCH', payload: editBranch });
+        dispatch({ type: 'UPDATE_SEMESTER', payload: editSemester });
+        dispatch({ type: 'UPDATE_HOSTEL', payload: editHostelName });
+        dispatch({ type: 'UPDATE_room', payload: editRoomNo });
+        if (editRoomNo) {
+          localStorage.setItem('room_no', editRoomNo);
+          NODisableli();
+        }
+      } else {
+        document.getElementById('profilealert').className = "p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400";
+        document.getElementById('profilealert').innerHTML = json.message || "Failed to update profile.";
+        document.getElementById('profilealert').style.display = 'block';
+      }
+    } catch (err) {
+      console.error(err);
+      document.getElementById('profilealert').className = "p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400";
+      document.getElementById('profilealert').innerHTML = "Error updating profile.";
+      document.getElementById('profilealert').style.display = 'block';
+    }
+  };
 
   const anotherclick=()=>{
     setcrossp((crossp+1)%2)
@@ -188,10 +288,12 @@ axios.post(`http://${state.backend}:${state.port}/api/a/newupload`, formData, {h
 .then(res => { 
   console.log(res.data)
   if(res.data.response){
+    document.getElementById('profilealert').className = "p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400";
     document.getElementById('profilealert').innerHTML=res.data.message
     document.getElementById('profilealert').style.display='block'
     document.getElementById('opencv2').disabled=false
     document.getElementById('stopcv2').disabled=true
+    dispatch({ type: 'UPDATE_photo_url', payload: res.data.url });
   }
   
   console.log("ended f")
@@ -201,8 +303,20 @@ axios.post(`http://${state.backend}:${state.port}/api/a/newupload`, formData, {h
      }
 
      const vpclicked=async(e)=>{
+      document.getElementById('profilealert').className = "p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400";
+      document.getElementById('profilealert').innerHTML = "Complete your profile and upload photo.";
       document.getElementById('profilealert').style.display='none'
       document.getElementById('stopcv2').disabled=true
+      
+      setEditName(state.user_name || "");
+      setEditUsername(state.user_username || "");
+      setEditMobile(state.user_mobile || "");
+      setEditParentMobile(state.user_parentMobile || "");
+      setEditUsn(state.user_usn || "");
+      setEditBranch(state.user_branch || "");
+      setEditSemester(state.user_semester || "");
+      setEditHostelName(state.user_hostelName || "");
+      setEditRoomNo(state.user_room || "");
      }
   
   return (
@@ -305,6 +419,19 @@ axios.post(`http://${state.backend}:${state.port}/api/a/newupload`, formData, {h
                 </span>
               </Link>
             </li>
+            <li className="mt-0.5 w-full" id="eventsli">
+              <Link onClick={() => setact(6)}
+                className={`py-2.7 text-sm ease-nav-brand my-0 mx-4 flex items-center whitespace-nowrap px-4 font-semibold text-slate-700 transition-colors ${isact===6 && "shadow-soft-xl rounded-lg bg-white"}`}
+                to="/events"
+              >
+                <div className={`shadow-soft-2xl mr-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white bg-center stroke-0 text-center xl:p-2.5  ${isact===6 && "bg-gradient-to-tl from-purple-700 to-pink-500"}` }>
+                <CalendarMonthIcon className={`${isact===6?'whitess':'blackss'}`}/>
+                </div>
+                <span className="ml-1 duration-300 opacity-100 pointer-events-none ease-soft">
+                  Events
+                </span>
+              </Link>
+            </li>
             {/* <li>
               <Link to="/about">about</Link>
             </li> */}
@@ -398,57 +525,80 @@ axios.post(`http://${state.backend}:${state.port}/api/a/newupload`, formData, {h
         <h1 className="modal-title fs-5">Profile </h1>
         <button className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div className="modal-body">
+      <div className="modal-body" style={{maxHeight: "80vh", overflowY: "auto"}}>
       <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert" id="profilealert">
       Complete your profile and upload photo.
-</div>
-        <div className="mbody d-flex">
-         <div className="leftp">
-         <div className="profile-card">
-  <div className="profile-card-header">
-    <h2 className="profile-card-title">{state.user_name}</h2>
-    <span className="profile-card-email">{state.user_email}</span>
-  </div>
-  <div className="profile-card-body">
-    <ul className="profile-card-details">
-    <li className="profile-card-details-item">
-        <span className="profile-card-details-label">Hostel :</span>
-        <span className="profile-card-details-value">MBH F</span>
-      </li>
-      <li className="profile-card-details-item">
-        <span className="profile-card-details-label">Room :</span>
-        <span className="profile-card-details-value">{state.user_room}</span>
-      </li>
-      <li className="profile-card-details-item">
-        <span className="profile-card-details-label">Phone :</span>
-        <span className="profile-card-details-value">{state.user_mobile}</span>
-      </li>
-    
-    </ul>
-  </div>
-</div>
+      </div>
+        <div className="mbody flex flex-col lg:flex-row gap-4">
+         <div className="leftp w-full lg:w-7/12 border-r pr-4">
+           <form onSubmit={saveProfile} className="space-y-3">
+             <div className="grid gap-3 sm:grid-cols-2">
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editName} onChange={e => setEditName(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Username</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editUsername} onChange={e => setEditUsername(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">USN</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editUsn} onChange={e => setEditUsn(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Mobile</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editMobile} onChange={e => setEditMobile(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Parent Mobile</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editParentMobile} onChange={e => setEditParentMobile(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Branch</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editBranch} onChange={e => setEditBranch(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Semester</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editSemester} onChange={e => setEditSemester(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Hostel Name</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editHostelName} onChange={e => setEditHostelName(e.target.value)} required />
+               </div>
+               <div>
+                 <label className="block text-xs font-semibold text-gray-600 mb-1">Room No</label>
+                 <input type="text" className="form-control text-sm w-full p-2 border rounded" value={editRoomNo} onChange={e => setEditRoomNo(e.target.value)} required />
+               </div>
+             </div>
+             <button type="submit" className="w-full mt-4 bg-gradient-to-tl from-purple-700 to-pink-500 hover:from-purple-800 hover:to-pink-600 text-white font-bold py-2.5 px-4 rounded shadow-soft-md transition-all">Save Profile Changes</button>
+           </form>
          </div>
-         <div className="rightp">
-         <input type="file" name="" id="ifile2" style={{display:"none"}} />
-         <video id="cvideo" autoPlay muted></video>
-                <div className="btnd mx-2">
-                <button className='btn btn-secondary opencvbtn' id='opencv2' onClick={opencv2}>
-                <div className="" style={{margin:"5px 10px"}}>
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-camera m-1" viewBox="0 0 16 16">
-  <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/>
-  <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
-</svg>Camera
-</div>
-<div className="loader" id='sloader2'></div>
-            </button>
-                <button id='stopcv2' className='btn btn-danger' onClick={stopcvfunc2}>Capture</button>
-                </div>
-                <canvas id="canvas2" width="300px" height="300px" ></canvas>
+         
+         <div className="rightp w-full lg:w-5/12 flex flex-col items-center">
+           <h6 className="font-bold text-gray-700 mb-2">Upload Profile Photo</h6>
+           <div className="w-full mb-3">
+             <label className="block text-xs font-semibold text-gray-600 mb-1">Choose from Gallery:</label>
+             <input type="file" accept="image/*" onChange={handleGalleryUpload} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100" />
+           </div>
+
+           <div className="w-full mb-3 flex flex-col items-center">
+             <label className="block text-xs font-semibold text-gray-600 mb-1 w-full text-left">Or Use Webcam:</label>
+             <video id="cvideo" autoPlay muted className="w-full max-w-[240px] rounded border bg-gray-50 aspect-video object-cover"></video>
+             <div className="flex gap-2 mt-2 w-full max-w-[240px]">
+               <button className="flex-1 btn btn-secondary opencvbtn text-xs py-1.5 flex items-center justify-center gap-1" id="opencv2" onClick={opencv2}>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" className="bi bi-camera" viewBox="0 0 16 16">
+                   <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/>
+                   <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
+                 </svg>Camera
+                 <div className="loader" id="sloader2" style={{width:"10px", height:"10px", borderWidth:"2px"}}></div>
+               </button>
+               <button id="stopcv2" className="flex-1 btn btn-danger text-xs py-1.5" onClick={stopcvfunc2}>Capture</button>
+             </div>
+           </div>
+
+           <canvas id="canvas2" width="300px" height="300px" className="hidden"></canvas>
          </div>
-         </div>
-
-
-
+        </div>
       </div>
      
     </div>

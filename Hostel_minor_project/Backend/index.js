@@ -20,6 +20,7 @@ app.use('/api/c',require('./routes/complains_route'))
 app.use('/api/b',require('./routes/room_allot'))
 app.use('/api/a',require('./routes/attendence'))
 app.use('/api/f',require('./routes/feedback'))
+app.use('/api/events',require('./routes/event_routes'))
 
 
 

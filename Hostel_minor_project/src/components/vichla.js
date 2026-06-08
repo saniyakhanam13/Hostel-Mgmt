@@ -85,28 +85,38 @@ const mind=async (e,a)=>{
 
 // sending token request
 const handle=async (e)=>{
+   e.preventDefault();
    let Purpose=document.getElementById('purpose').value
+   let destination=document.getElementById('destination').value
    let idate=document.getElementById('date').value
    let itime=document.getElementById('inTime').value
    let It=`${idate}T${itime}`
-   console.log(It)
-    e.preventDefault();
-    const response=await fetch(`http://${state.backend}:${state.port}/api/g/gatetoken`,{
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json',
-            'auth-token':localStorage.getItem('token')
-        },
-        body: JSON.stringify({Subject:Purpose,It:It})
+   
+   let now = new Date();
+   let expectedReturn = new Date(It);
+   if (expectedReturn <= now) {
+     setdivred(1);
+     setotit("Expected return date and time must be in the future.");
+     return;
+   }
 
-
-    });
-    let json=await response.json();
-    
-    if(json.response){
-       setdivstatus(1)
-       setdivgreen(1)
-    }
+   const response=await fetch(`http://${state.backend}:${state.port}/api/g/gatetoken`,{
+       method:'POST',
+       headers:{
+           'Content-Type':'application/json',
+           'auth-token':localStorage.getItem('token')
+       },
+       body: JSON.stringify({Subject:Purpose,It:It,destination:destination})
+   });
+   let json=await response.json();
+   if(json.response){
+      setdivstatus(1);
+      setdivgreen(1);
+      reloadhistory();
+   } else {
+      setdivred(1);
+      setotit(json.message || "Failed to request gate pass.");
+   }
 }
 const newdownload2=async (e)=>{
     const response=await fetch(`http://${state.backend}:${state.port}/api/g/fetchlasttoken`,{
@@ -176,7 +186,7 @@ const gethistory=async (e)=>{
     for(let i=parseInt(json.history_lenght)-1;i>=0;i--){
     
     
-        let g1="xxxxxx",g2="--.--",n1="xxxxxx", n2="--.--"
+        let g1="xxxxxx",g2="--.--",n1="xxxxxx", n2="--.--", exp1="xxxxxx", exp2="--.--"
         
     if(json.history[i].out_time){
         let out_string=convertTZ(json.history[i].out_time, "Asia/Kolkata").toString()
@@ -188,6 +198,19 @@ const gethistory=async (e)=>{
          n1=in_string.slice(4,15)
          n2=in_string.slice(16,21)
     }
+    if(json.history[i].expected_in_time){
+        let exp_string=convertTZ(json.history[i].expected_in_time, "Asia/Kolkata").toString()
+         exp1=exp_string.slice(4,15)
+         exp2=exp_string.slice(16,21)
+    }
+    let statusColor = "bg-yellow-100 text-yellow-800"
+    if (json.history[i].status === "Approved") statusColor = "bg-green-100 text-green-800"
+    else if (json.history[i].status === "Rejected") statusColor = "bg-red-100 text-red-800"
+    else if (json.history[i].status === "Out") statusColor = "bg-blue-100 text-blue-800"
+    else if (json.history[i].status === "Closed") statusColor = "bg-gray-100 text-gray-800"
+
+    let statusBadge = `<span class="px-2 py-1 text-xs font-bold rounded-full ${statusColor}">${json.history[i].status}</span>`
+
        tbody.innerHTML=tbody.innerHTML+`<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
            ${g1}
@@ -196,13 +219,19 @@ const gethistory=async (e)=>{
            ${g2}
        </td>
        <td class="px-6 py-4">
-           ${json.history[i].Subject}
-       </td>
-       <td class="px-6 py-4 whitespace-nowrap">
-       ${n1}
+           ${json.history[i].destination || "Local"}
        </td>
        <td class="px-6 py-4">
-          ${n2}
+           ${exp1} ${exp2}
+       </td>
+       <td class="px-6 py-4 whitespace-nowrap">
+           ${n1} ${n2}
+       </td>
+       <td class="px-6 py-4">
+          ${json.history[i].leaveDuration || "N/A"}
+       </td>
+       <td class="px-6 py-4">
+          ${statusBadge}
        </td>
        <td class="px-6 py-4">
            <button class="font-medium text-blue-600 dark:text-blue-500 passdbtn">Download</button>
@@ -324,13 +353,19 @@ Good Bye!
                     Out Time
                 </th>
                 <th scope="col" className="px-6 py-3">
-                    Purpose
+                    Destination
                 </th>
                 <th scope="col" className="px-6 py-3">
-                    In Date
+                    Expected Return
                 </th>
                 <th scope="col" className="px-6 py-3">
-                    In time
+                    Actual Return
+                </th>
+                <th scope="col" className="px-6 py-3">
+                    Duration
+                </th>
+                <th scope="col" className="px-6 py-3">
+                    Status
                 </th>
                 <th scope="col" className="px-6 py-3">
                    Pass
@@ -461,22 +496,17 @@ Good Bye!
             <input type="time" id="inTime" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Doe"  required/>
         </div>
         <div>
-            <label htmlFor="purpose" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Purpose</label>
+            <label htmlFor="purpose" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Purpose / Reason</label>
             <input type="text" id="purpose" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Shopping" required/>
+        </div>
+        <div>
+            <label htmlFor="destination" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Destination</label>
+            <input type="text" id="destination" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Local Market / Home" required/>
         </div>
         <div>
             <label htmlFor="mobile" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Mobile</label>
             <input type="tel" id="mobile" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="9876543210" required/>
         </div>
-        {/* <div>
-            <label htmlFor="leave" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">leave</label>
-            <input type="checkbox" id="leave" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="9876543210" required/>
-        </div>
-        <div>
-            <label htmlFor="messoff" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Turn off Mess</label>
-            <input type="checkbox" id="messoff" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="9876543210" required/>
-        </div> */}
-         
     </div>
   
   

@@ -20,10 +20,9 @@ router.post("/feedback", fetchuser, [
   
     const usera = await User.findById(req.user)
    
-   
     try{
         const Feedbak = new Feedback({
-            user:req.user,name:usera.name,email:usera.email,title:req.body.title,message:req.body.message})
+            user:req.user,name:usera.name,email:usera.email,title:req.body.title,category:req.body.category || "Hostel",message:req.body.message})
         const new_feedback = await Feedbak.save()
         res.json({response:true,message:"Feedback successfully submitted"})
         
@@ -39,8 +38,11 @@ router.post("/feedback", fetchuser, [
 
   router.get('/feedback',fetchadmin,async (req,res)=>{
     try {
-        const feedbacks = await Feedback.find()
-
+        let filter = {};
+        if (req.query.category && req.query.category !== 'All') {
+            filter.category = req.query.category;
+        }
+        const feedbacks = await Feedback.find(filter)
   
         res.json({feedbacks:feedbacks,response:true})
     } catch (error) {

@@ -3,12 +3,11 @@ const mongoose = require("mongoose");
 const fetchuser = require('../middleware/fetchuser');
 const GridFsStorage = require("multer-gridfs-storage").GridFsStorage;
 
-const dbPromise = new Promise((resolve, reject) => {
+const dbPromise = new Promise((resolve) => {
     if (mongoose.connection.readyState === 1) {
         resolve(mongoose.connection.db);
     } else {
         mongoose.connection.once("open", () => resolve(mongoose.connection.db));
-        mongoose.connection.once("error", (err) => reject(err));
     }
 });
 

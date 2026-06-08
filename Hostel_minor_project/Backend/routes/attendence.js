@@ -275,6 +275,9 @@ router.get("/newupload/:filename", async (req, res) => {
     try {
        
         const file = await gfs.files.findOne({ filename:req.params.filename });
+        if (!file) {
+            return res.status(404).json({ error: "File not found" });
+        }
       
         // const fid=file._id
 
@@ -305,6 +308,9 @@ router.get("/tempupload/:filename", async (req, res) => {
     try {
        console.log(req.params.filename)
         const file = await gfs.db.collection('photos_temporary' + '.files').findOne({ filename:req.params.filename })
+        if (!file) {
+            return res.status(404).json({ error: "File not found" });
+        }
        console.log(file)
     
         
@@ -403,5 +409,49 @@ Attend.insertMany(absentAttendanceRecords, function(err, result) {
 // console.log(absentees)
 }
 
+const fetchadmin = require('../middleware/fetchadmin');
+
+// Route 4: Fetch all attendance GET '/api/a/allattendance' (requires admin auth)
+router.get('/allattendance', fetchadmin, async (req, res) => {
+    try {
+        let query = {};
+        
+        // Date filter
+        if (req.query.date) {
+            const dateObj = new Date(req.query.date);
+            const startOfDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+            const endOfDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate() + 1);
+            query.date = { $gte: startOfDay, $lt: endOfDay };
+        }
+
+        // Student name or room_no search
+        if (req.query.search) {
+            const searchRegex = new RegExp(req.query.search, 'i');
+            const searchNum = parseInt(req.query.search);
+            query.$or = [
+                { name: searchRegex },
+                { room_no: isNaN(searchNum) ? -1 : searchNum }
+            ];
+        }
+
+        const attendance = await Attend.find(query).sort({ date: -1 });
+        res.json({ attendance: attendance, response: true });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
+
+// Route 5: Edit attendance POST '/api/a/editattendance' (requires admin auth)
+router.post('/editattendance', fetchadmin, async (req, res) => {
+    try {
+        const { id, status } = req.body;
+        const record = await Attend.findByIdAndUpdate(id, { $set: { status: status } }, { new: true });
+        res.json({ message: "Attendance status updated successfully", record, response: true });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
 
 module.exports=router

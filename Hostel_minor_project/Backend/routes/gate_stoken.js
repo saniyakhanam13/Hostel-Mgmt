@@ -19,16 +19,17 @@ router.post("/gatetoken", fetchuser, [
 
   const usera = await User.findById(req.user)
   const room = await Room.find({ user: req.user })
+  const room_no = room && room[0] ? room[0].room_no : "Unallotted";
  
   const lastgatetoken = await Token.find({ user: req.user }).sort({_id:-1}).limit(1);
   if(lastgatetoken.length>0){
     console.log(lastgatetoken[0].in_time)
-    if(lastgatetoken[0].in_time){
+    if(lastgatetoken[0].in_time || lastgatetoken[0].status === "Rejected"){
        
   try{
     console.log(req.body.Subject)
     const newtoken = new Token({
-        user:req.user,name:usera.name,room_no:room[0].room_no, Subject:req.body.Subject, expected_in_time:req.body.It,
+        user:req.user,name:usera.name,room_no:room_no, Subject:req.body.Subject, destination:req.body.destination || "Local", expected_in_time:req.body.It, status: "Pending"
     })
     const newtoken_request = await newtoken.save()
     res.json({newtoken_request:newtoken_request,response:true})
@@ -48,7 +49,7 @@ router.post("/gatetoken", fetchuser, [
   
   try{
     const newtoken = new Token({
-        user:req.user,name:usera.name,room_no:room[0].room_no, Subject:req.body.Subject, expected_in_time:req.body.It,
+        user:req.user,name:usera.name,room_no:room_no, Subject:req.body.Subject, destination:req.body.destination || "Local", expected_in_time:req.body.It, status: "Pending"
     })
     const newtoken_request = await newtoken.save()
     res.json({newtoken_request:newtoken_request,response:true})
@@ -131,7 +132,7 @@ else{
   }
   else{
     try {
-      let ugatet = await Token.updateOne({_id:req.body.t_id},{$set: {out_time: req.body.out_time}});
+      let ugatet = await Token.updateOne({_id:req.body.t_id},{$set: {out_time: req.body.out_time, status: "Out"}});
       res.send("out_time updated sucessfully")
     } catch (error) {
       console.log(error)
@@ -169,8 +170,21 @@ if(gatetoken.length==0){
 }
 else{
   if(gatetoken[0].out_time){
+    // Validation
+    const outTime = new Date(gatetoken[0].out_time);
+    const inTime = new Date(req.body.in_time);
+    if (inTime < outTime) {
+      return res.json({message: "In-time cannot be before out-time", response: false});
+    }
+
+    // Calculate duration
+    const diffMs = inTime - outTime;
+    const diffHrs = Math.floor(diffMs / 3600000);
+    const diffMins = Math.round(((diffMs % 3600000) / 60000));
+    const durationStr = `${diffHrs}h ${diffMins}m`;
+
     try {
-      let ugatet = await Token.updateOne({_id:req.body.t_id},{$set: {in_time: req.body.in_time}});
+      let ugatet = await Token.updateOne({_id:req.body.t_id},{$set: {in_time: req.body.in_time, status: "Closed", leaveDuration: durationStr}});
       res.json({message:"in_time updated sucessfully",response:true})
     } catch (error) {
       console.log(error)
@@ -195,7 +209,16 @@ else{
 
 });
 
-
-
+const fetchadmin = require('../middleware/fetchadmin');
+router.post('/updatepassstatus', fetchadmin, async (req, res) => {
+    try {
+        const { t_id, status } = req.body;
+        const pass = await Token.findByIdAndUpdate(t_id, { $set: { status: status } }, { new: true });
+        res.json({ message: `Pass ${status} successfully`, pass, response: true });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
 
 module.exports=router

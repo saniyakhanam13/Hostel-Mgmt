@@ -11,21 +11,50 @@ export const Adminhome = () => {
 
 
   const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    presentToday: 0,
+    absentToday: 0,
+    pendingLeaves: 0,
+    openComplaints: 0,
+    feedbackCount: 0,
+    eventParticipation: 0
+  });
+
   useEffect(() => {
-  
-  if(localStorage.getItem('admintoken')){
-    dothis()
-    getalldata()
-}else{
-    dothis()
-    navigate("/adminsignin")
-}
+    if(localStorage.getItem('admintoken')){
+      dothis()
+      getalldata()
+      fetchStats()
+  }else{
+      dothis()
+      navigate("/adminsignin")
+  }
   
 },[]);
- function dothis(){
+
+  function dothis(){
   dispatch({ type: 'UPDATE_VALUE', payload: false });
 dispatch({ type: 'UPDATE_AVALUE', payload: true });
  }
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(`http://${state.backend}:${state.port}/api/ad/stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': localStorage.getItem('admintoken')
+        }
+      });
+      const json = await response.json();
+      if (json.response) {
+        setStats(json.stats);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
  let bodykadata=[]
  const [submitresponse,setsubmitresponse]=useState("")
@@ -42,7 +71,6 @@ dispatch({ type: 'UPDATE_AVALUE', payload: true });
       
   });
   let json=await response.json();
-  let elly=document.getElementById('tbody')
   if(json.response){
   console.log(json)
   for(let i=0;i<parseInt(json.data.length);i++){
@@ -50,11 +78,10 @@ dispatch({ type: 'UPDATE_AVALUE', payload: true });
     let room_no=json.data[i].room_no
     let sname=json.data[i].name
     let semail=json.data[i].email
-    let dessignal=true
   
  
    
-    bodykadata.push(<tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+    bodykadata.push(<tr key={i} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
     <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
         {room_no}
     </th>
@@ -62,13 +89,13 @@ dispatch({ type: 'UPDATE_AVALUE', payload: true });
        {sname}
     </td>
     <td className="px-6 py-4">
-    something
+    Allotted
     </td>
     <td className="px-6 py-4">
-    else
+    N/A
     </td>
     <td className="px-6 py-4">
-    Here
+    N/A
     </td>
    
     <td className="px-6 py-4 ">
@@ -97,103 +124,104 @@ dispatch({ type: 'UPDATE_AVALUE', payload: true });
   
   elly.style.transform = `rotate(${rott}deg)`;
   rott=rott+360
-  const tempv= await getalldata();
+  await getalldata();
+  await fetchStats();
  }
   return (
    <>
    
    <div className="upperw">
    
-    <div className="flex flex-wrap -mx-3" style={{margin:"30px",width:"90%"}}>
+     <div className="flex flex-wrap -mx-3" style={{margin:"30px",width:"90%"}}>
 
-<div className="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-<div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-<div className="flex-auto p-4">
-<div className="flex flex-row -mx-3">
-<div className="flex-none w-2/3 max-w-full px-3">
-<div>
-<p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Rooms</p>
-<h5 className="mb-0 font-bold hclass">
-200
-<span className="leading-normal text-sm font-weight-bolder text-lime-500 lef200">left</span>
-</h5>
-</div>
-</div>
-<div className="px-3 text-right basis-1/3">
-<div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500  bluegrad albasics">
-<MeetingRoomRoundedIcon className='whitess meetrome'/></div>
-</div>
-</div>
-</div>
-</div>
-</div>
+ <div className="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
+ <div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+ <div className="flex-auto p-4">
+ <div className="flex flex-row -mx-3">
+ <div className="flex-none w-2/3 max-w-full px-3">
+ <div>
+ <p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Total Students</p>
+ <h5 className="mb-0 font-bold hclass">
+ {stats.totalStudents}
+ <span className="leading-normal text-sm font-weight-bolder text-purple-500 lef200">Enrolled</span>
+ </h5>
+ </div>
+ </div>
+ <div className="px-3 text-right basis-1/3">
+ <div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500  bluegrad albasics">
+ <MeetingRoomRoundedIcon className='whitess meetrome'/></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-<div className="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-<div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-<div className="flex-auto p-4">
-<div className="flex flex-row -mx-3">
-<div className="flex-none w-2/3 max-w-full px-3">
-<div>
-<p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Attendance</p>
-<h5 className="mb-0 font-bold hclass">
-23
-<span className="leading-normal text-sm font-weight-bolder text-lime-500 lef200">left</span>
-</h5>
-</div>
-</div>
-<div className="px-3 text-right basis-1/3">
-<div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500 bluegrad albasics">
-<BadgeRoundedIcon className='whitess meetrome'/></div>
-</div>
-</div>
-</div>
-</div>
-</div>
+ <div className="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
+ <div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+ <div className="flex-auto p-4">
+ <div className="flex flex-row -mx-3">
+ <div className="flex-none w-2/3 max-w-full px-3">
+ <div>
+ <p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Today Present</p>
+ <h5 className="mb-0 font-bold hclass">
+ {stats.presentToday}
+ <span className="leading-normal text-sm font-weight-bolder text-red-500 lef200">{stats.absentToday} Absent</span>
+ </h5>
+ </div>
+ </div>
+ <div className="px-3 text-right basis-1/3">
+ <div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500 bluegrad albasics">
+ <BadgeRoundedIcon className='whitess meetrome'/></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-<div className="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
-<div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-<div className="flex-auto p-4">
-<div className="flex flex-row -mx-3">
-<div className="flex-none w-2/3 max-w-full px-3">
-<div>
-<p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Gate-pass</p>
-<h5 className="mb-0 font-bold hclass">
-6
-<span className="leading-normal text-red-600 text-sm font-weight-bolder lef200">Today</span>
-</h5>
-</div>
-</div>
-<div className="px-3 text-right basis-1/3 ">
-<div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500 bluegrad albasics">
-<QrCode2RoundedIcon className='whitess meetrome'/></div>
-</div>
-</div>
-</div>
-</div>
-</div>
+ <div className="w-full max-w-full px-3 mb-6 sm:w-1/2 sm:flex-none xl:mb-0 xl:w-1/4">
+ <div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+ <div className="flex-auto p-4">
+ <div className="flex flex-row -mx-3">
+ <div className="flex-none w-2/3 max-w-full px-3">
+ <div>
+ <p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Pending Passes</p>
+ <h5 className="mb-0 font-bold hclass">
+ {stats.pendingLeaves}
+ <span className="leading-normal text-red-600 text-sm font-weight-bolder lef200">Review</span>
+ </h5>
+ </div>
+ </div>
+ <div className="px-3 text-right basis-1/3 ">
+ <div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500 bluegrad albasics">
+ <QrCode2RoundedIcon className='whitess meetrome'/></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-<div className="w-full max-w-full px-3 sm:w-1/2 sm:flex-none xl:w-1/4">
-<div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
-<div className="flex-auto p-4">
-<div className="flex flex-row -mx-3">
-<div className="flex-none w-2/3 max-w-full px-3">
-<div>
-<p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Complains</p>
-<h5 className="mb-0 font-bold hclass">
-100
-<span className="leading-normal text-sm font-weight-bolder text-lime-500 lef200">left</span>
-</h5>
-</div>
-</div>
-<div className="px-3 text-right basis-1/3 ">
-<div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500 bluegrad albasics">
-<WarningRoundedIcon className='whitess meetrome'/></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
+ <div className="w-full max-w-full px-3 sm:w-1/2 sm:flex-none xl:w-1/4">
+ <div className="relative flex flex-col min-w-0 break-words bg-white shadow-soft-xl rounded-2xl bg-clip-border">
+ <div className="flex-auto p-4">
+ <div className="flex flex-row -mx-3">
+ <div className="flex-none w-2/3 max-w-full px-3">
+ <div>
+ <p className="mb-0 font-sans font-semibold leading-normal text-sm" style={{color:" #67748e",display: "flex"}}>Active Complains</p>
+ <h5 className="mb-0 font-bold hclass">
+ {stats.openComplaints}
+ <span className="leading-normal text-sm font-weight-bolder text-yellow-500 lef200">Open</span>
+ </h5>
+ </div>
+ </div>
+ <div className="px-3 text-right basis-1/3 ">
+ <div className="inline-block w-12 h-12 text-center rounded-lg bg-gradient-to-tl from-purple-700 to-pink-500 bluegrad albasics">
+ <WarningRoundedIcon className='whitess meetrome'/></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
    </div>
    <div className="downward">
    <div className="one two fourth justify-content-center calcby">

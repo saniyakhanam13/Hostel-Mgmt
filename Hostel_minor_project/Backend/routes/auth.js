@@ -34,6 +34,13 @@ router.post('/createuser',[
             password: scpass,
             email: req.body.email,
             mobile: req.body.mobile,
+            username: req.body.username || "",
+            usn: req.body.usn || "",
+            hostelName: req.body.hostelName || "",
+            roomNo: req.body.roomNo || "",
+            branch: req.body.branch || "",
+            semester: req.body.semester || "",
+            parentMobile: req.body.parentMobile || "",
           })
     const data ={
             id:user.id
@@ -131,5 +138,38 @@ router.get('/getuser', register_verify,  async (req, res) => {
     }
   })
 
+// Route 4: Update profile details POST '/api/auth/updateprofile' (requires auth)
+router.post('/updateprofile', fetchuser, async (req, res) => {
+    try {
+        const { name, username, usn, mobile, parentMobile, branch, semester, hostelName, roomNo } = req.body;
+        const updateFields = {};
+        if (name) updateFields.name = name;
+        if (username) updateFields.username = username;
+        if (usn) updateFields.usn = usn;
+        if (mobile) updateFields.mobile = mobile;
+        if (parentMobile) updateFields.parentMobile = parentMobile;
+        if (branch) updateFields.branch = branch;
+        if (semester) updateFields.semester = semester;
+        if (hostelName) updateFields.hostelName = hostelName;
+        if (roomNo) {
+            updateFields.roomNo = roomNo;
+            updateFields.room = true;
+            
+            // Sync with Room collection
+            const Room = require('../models/room');
+            await Room.findOneAndUpdate(
+                { user: req.user },
+                { name: name || "Student", room_no: parseInt(roomNo) },
+                { upsert: true, new: true }
+            );
+        }
+
+        let user = await User.findByIdAndUpdate(req.user, { $set: updateFields }, { new: true });
+        res.json({ message: "Profile updated successfully", user, response: true });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
 
 module.exports=router

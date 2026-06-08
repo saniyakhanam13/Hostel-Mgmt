@@ -4,13 +4,14 @@ const Room = require('../../models/room')
 const Admin = require('../../models/admins');
 const Complain = require('../../models/complains_model');
 const Token = require("../../models/stoken");
+const Attend = require('../../models/attend');
 const router = express.Router()
 const fetchadmin = require('../../middleware/fetchadmin')
 
 router.get('/getallusers', fetchadmin,  async (req, res) => {
     let userId = req.user;
     const admin = await Admin.findById(userId)
-    if(admin.role!='admin'){
+    if(!admin || admin.role!='admin'){
         return res.status(401).json({message:"Access denied",response:false})
     }else{
         const rooms=await Room.find()
@@ -60,5 +61,65 @@ router.get('/getallpasses', fetchadmin,  async (req, res) => {
 
   })
 
+// Route 4: Fetch dashboard real-time statistics GET '/api/ad/stats' (requires admin auth)
+router.get('/stats', fetchadmin, async (req, res) => {
+    try {
+        const userId = req.user;
+        const admin = await Admin.findById(userId);
+        if (!admin || admin.role !== 'admin') {
+            return res.status(401).json({ message: "Access denied", response: false });
+        }
+
+        const totalStudents = await User.countDocuments();
+        
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        const presentToday = await Attend.countDocuments({
+            status: "Present",
+            date: { $gte: startOfDay, $lt: endOfDay }
+        });
+
+        const absentToday = await Attend.countDocuments({
+            status: "Absent",
+            date: { $gte: startOfDay, $lt: endOfDay }
+        });
+
+        const pendingLeaves = await Token.countDocuments({
+            status: "Pending"
+        });
+
+        const openComplaints = await Complain.countDocuments({
+            status: { $ne: "Resolved" }
+        });
+
+        const Feedback = require('../../models/feedback');
+        const feedbackCount = await Feedback.countDocuments();
+
+        const Event = require('../../models/event');
+        const events = await Event.find();
+        let eventParticipation = 0;
+        events.forEach(e => {
+            if (e.participants) eventParticipation += e.participants.length;
+        });
+
+        res.json({
+            response: true,
+            stats: {
+                totalStudents,
+                presentToday,
+                absentToday,
+                pendingLeaves,
+                openComplaints,
+                feedbackCount,
+                eventParticipation
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
 
 module.exports=router

@@ -10,8 +10,16 @@ export const Signin = (props) => {
     const [alertText, setalertText] = useState("secondary");
     const [email_input, setemail_input] = useState("");
     const [password_input, setpassword_input] = useState("");
-
+    const [currentTime, setCurrentTime] = useState(new Date());
     const navigate = useNavigate();
+
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setCurrentTime(new Date());
+      }, 1000);
+      return () => clearInterval(timer);
+    }, []);
+
     useEffect(() => {
     if(localStorage.getItem('token')){
         navigate("/home")}
@@ -61,10 +69,21 @@ export const Signin = (props) => {
    <div className="container signinbox">
    <section className="bg-gray-50 dark:bg-gray-900 siginsection">
   <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0 sectonexdiv">
-      <a href="#" className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-          <img className="w-8 h-8 mr-2" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" alt="logo" />
-          Mega Boys Hostel    
+      <a href="#" className="flex flex-col items-center mb-6 text-gray-900 dark:text-white">
+          <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">Campus Stay</span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1">Smart Hostel Management for Modern Campuses</span>
       </a>
+
+      {/* Real-time Clock Widget */}
+      <div className="mb-6 p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-md flex flex-col items-center justify-center min-w-[280px] hover:scale-102 transition-all duration-300">
+        <p className="text-3xl font-mono font-extrabold text-purple-700 dark:text-purple-400 tracking-widest m-0">
+          {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+        </p>
+        <p className="text-xs uppercase font-bold tracking-widest text-gray-500 dark:text-gray-400 mt-1.5 m-0">
+          {currentTime.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+        </p>
+      </div>
+
       <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
           <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
         

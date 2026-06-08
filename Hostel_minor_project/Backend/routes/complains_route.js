@@ -20,10 +20,11 @@ router.post("/newcomplain", fetchuser, [
   
     const usera = await User.findById(req.user)
     const room = await Room.find({ user: req.user })
+    const room_no = room && room[0] ? room[0].room_no : "Unallotted";
    
     try{
         const newcomplain = new Complain({
-            user:req.user,name:usera.name,room_no:room[0].room_no,catagory:req.body.catagory,description:req.body.description
+            user:req.user,name:usera.name,room_no:room_no,catagory:req.body.catagory,description:req.body.description
         })
         const new_complain = await newcomplain.save()
         res.json({new_complain:new_complain,response:true})
@@ -107,5 +108,41 @@ router.post("/newcomplain", fetchuser, [
   
   });
 
+const fetchadmin = require('../middleware/fetchadmin');
 
-  module.exports=router
+// Route 4: Fetch all complaints GET '/api/c/allcomplains' (requires admin auth)
+router.get('/allcomplains', fetchadmin, async (req, res) => {
+    try {
+        const complaints = await Complain.find().sort({ date: -1 });
+        res.json({ allcomps: complaints, complains_length: complaints.length, response: true });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
+
+// Route 5: Assign complaint POST '/api/c/assigncomplain' (requires admin auth)
+router.post('/assigncomplain', fetchadmin, async (req, res) => {
+    try {
+        const { id, assignedTo } = req.body;
+        const complaint = await Complain.findByIdAndUpdate(id, { $set: { assignedTo: assignedTo, status: "In Progress" } }, { new: true });
+        res.json({ message: `Complaint assigned to ${assignedTo}`, complaint, response: true });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
+
+// Route 6: Update complaint status POST '/api/c/updatecomplainstatus' (requires admin auth)
+router.post('/updatecomplainstatus', fetchadmin, async (req, res) => {
+    try {
+        const { id, status } = req.body;
+        const complaint = await Complain.findByIdAndUpdate(id, { $set: { status: status } }, { new: true });
+        res.json({ message: `Complaint status updated to ${status}`, complaint, response: true });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", response: false });
+    }
+});
+
+module.exports=router

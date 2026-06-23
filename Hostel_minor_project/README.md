@@ -128,3 +128,5 @@ Contributions are welcome! If you'd like to contribute to this project, please f
 - Make your changes and commit them with descriptive commit messages.
 - Push your changes to your forked repository.
 - Submit a pull request detailing your changes.
+
+Project maintained by Saniya Khanam
